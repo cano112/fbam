@@ -1,4 +1,4 @@
-FROM spritsail/alpine-cmake:edge
+FROM spritsail/alpine-cmake:3.9
 COPY . ./decorator
 
 RUN chmod +x ./decorator/build.sh
