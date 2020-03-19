@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 project(fbam C)
 
 find_library(DL_LIB dl)
@@ -8,6 +8,6 @@ set(CMAKE_SHARED_LINKER_FLAGS "-ldl")
 
 add_library(blockaccess SHARED block_access_decorator/block_access_decorator.c block_access_decorator/block_access_decorator.h common/commons.h)
 target_link_libraries(blockaccess "${DL_LIB}")
-add_executable(log-appender "log_appender/log_appender.c")
+add_executable(testreader "testreader/reader.c")
 
 
