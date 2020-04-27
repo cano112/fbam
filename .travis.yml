@@ -13,7 +13,7 @@ jobs:
       script: ./build.sh
       deploy: 
         provider: releases
-        api_key: $GITHUB_OAUTH_TOKEN
+        api_key: $GH_TOKEN
         file_glob: true
         file: ./build/libblockaccess.so.*
         skip_cleanup: true
