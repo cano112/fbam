@@ -7,8 +7,6 @@ jobs:
   include:
     - stage: GitHub release
       script: chmod +x ./build.sh && ./build.sh
-      before_deploy:
-        - get config --local
       deploy: 
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
