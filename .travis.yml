@@ -5,8 +5,8 @@ compiler: gcc
 
 jobs:
   include:
-    - stage: Build
-      script: ./build.sh
+    - script: chmod +x ./build.sh
+    - script: ./build.sh
     - stage: GitHub release
       script: echo "Deploying to GitHub releases..."
       deploy: 
