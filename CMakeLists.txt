@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.9.2)
 project(fbam C)
 
 find_library(DL_LIB dl)
