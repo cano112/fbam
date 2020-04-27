@@ -5,14 +5,15 @@ compiler: gcc
 
 jobs:
   include:
-    - stage: build
-      script: chmod +x ./build.sh && ./build.sh
     - stage: GitHub release
-      script: echo "Deploying to GitHub releases..."
+      script: chmod +x ./build.sh && ./build.sh
+      before_deploy:
+        - get config --local
       deploy: 
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
-        file: ./build/libblockaccess.so
+        file_glob: true
+        file: ./build/libblockaccess.so.*
         skip_cleanup: true
         on:
           tags: true
