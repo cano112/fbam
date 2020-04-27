@@ -7,18 +7,16 @@ jobs:
   include:
     - stage: Tests
       script: ./build.sh # TODO: Add smoke test
-    - stage: Tag
-      script: ./tag_version.sh
-    - stage: GitHub release
+    - stage: GitHub release & deploy
       script: ./build.sh
+      before_deploy: 
+        - ./tag_version.sh
       deploy: 
         provider: releases
         api_key: $GH_TOKEN
         file_glob: true
         file: ./build/libblockaccess.so.*
         skip_cleanup: true
-        on:
-          tags: true
             
     
   
