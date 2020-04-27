@@ -1,0 +1,21 @@
+sudo: false
+dist: trusty
+language: c
+compiler: gcc
+
+jobs:
+  include:
+    - stage: Build
+      script: ./build.sh
+    - stage: GitHub release
+      script: echo "Deploying to GitHub releases..."
+      deploy: 
+        provider: releases
+        api_key: $GITHUB_OAUTH_TOKEN
+        file: ./build/libblockaccess.so
+        skip_cleanup: true
+        on:
+          tags: true
+            
+    
+  
