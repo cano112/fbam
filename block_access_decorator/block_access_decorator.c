@@ -9,7 +9,7 @@ void report_and_exit(const char* msg) {
 void append_log(FILE* log_file, char* function_name, char* file_path, size_t count, off_t offset)
 {
     char log_message[MAX_LOG_LEN];
-    snprintf(log_message, MAX_LOG_LEN, "{\"fuction_name\": \"%s\", \"file_path\": \"%s\", \"size\": \"%zu\", \"offset\": \"%ld\"}\n",
+    snprintf(log_message, MAX_LOG_LEN, "{\"function_name\": \"%s\", \"file_path\": \"%s\", \"size\": \"%zu\", \"offset\": \"%ld\"}\n",
             function_name, file_path, count, offset);
     fputs(log_message, log_file);
     fflush(log_file);
