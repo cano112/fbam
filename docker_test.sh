@@ -10,5 +10,4 @@ make
 touch sample.txt
 touch /fbam/file_access.log
 echo "Ala ma kota" > sample.txt
-ls -al
 LD_PRELOAD=/fbam/build/libblockaccess.so.$version_string ./testreader ./sample.txt

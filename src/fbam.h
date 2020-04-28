@@ -3,7 +3,7 @@
 
 #define _GNU_SOURCE
 
-#include "../common/commons.h"
+#include "constants.h"
 
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -11,6 +11,8 @@
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 typedef int (*pread_function_type)(int fd, void *buf, size_t count, off_t offset);
 
