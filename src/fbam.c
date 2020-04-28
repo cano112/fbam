@@ -2,14 +2,10 @@
 
 FILE* access_log_file;
 int logs_count = 0;
-char* jobId;
+//char* jobId;
 
 static int initialize() {
     access_log_file = fopen(LOG_FILE_PATH, "a+");
-//    FILE *cmdline = fopen("/proc/self/cmdline", "rb");
-//    workflowId = malloc(100*sizeof(char));
-//    fread(workflowId, sizeof(char), 100, cmdline);
-//    fclose(cmdline);
 
     return 0;
 }
@@ -34,13 +30,12 @@ void append_log(FILE* log_file, time_t time, char* function_name, char* file_pat
     char time_buffer[TIMESTAMP_BUFFER_LEN];
     snprintf(log_message, MAX_LOG_LEN,
             "{\"jobId\": \"%s\", \"timestamp\": \"%s\", \"function_name\": \"%s\", \"file_path\": \"%s\", \"size\": \"%zu\", \"offset\": \"%ld\"}\n",
-             workflowId, format_timestamp(time_buffer, time), function_name, file_path, count, offset);
+             "TODO", format_timestamp(time_buffer, time), function_name, file_path, count, offset);
     fputs(log_message, log_file);
     logs_count++;
     if (logs_count == BUFFER_SIZE)
     {
         logs_count = 0;
-        fputs("BUFFER CLEAR", log_file);
         fflush(log_file);
     }
 }
@@ -72,25 +67,25 @@ ssize_t read(int fd, void *buf, size_t count)
     return original_read(fd, buf, count, 0);
 }
 
-int main_hook(int argc, char **argv, char **envp)
-{
-    jobId = argv[1];
-    return main_orig(argc, argv, envp);
-}
-
-int __libc_start_main(
-        int (*main)(int, char **, char **),
-        int argc,
-        char **argv,
-        int (*init)(int, char **, char **),
-        void (*fini)(void),
-        void (*rtld_fini)(void),
-        void *stack_end)
-{
-    main_orig = main;
-    typeof(&__libc_start_main) orig = dlsym(RTLD_NEXT, "__libc_start_main");
-    return orig(main_hook, argc, argv, init, fini, rtld_fini, stack_end);
-}
+//int main_hook(int argc, char **argv, char **envp)
+//{
+//    jobId = argv[1];
+//    return main_orig(argc, argv, envp);
+//}
+//
+//int __libc_start_main(
+//        int (*main)(int, char **, char **),
+//        int argc,
+//        char **argv,
+//        int (*init)(int, char **, char **),
+//        void (*fini)(void),
+//        void (*rtld_fini)(void),
+//        void *stack_end)
+//{
+//    main_orig = main;
+//    typeof(&__libc_start_main) orig = dlsym(RTLD_NEXT, "__libc_start_main");
+//    return orig(main_hook, argc, argv, init, fini, rtld_fini, stack_end);
+//}
 
 
 
