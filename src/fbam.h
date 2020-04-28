@@ -16,8 +16,12 @@
 
 typedef int (*pread_function_type)(int fd, void *buf, size_t count, off_t offset);
 
+int (*main_orig)(int, char **, char **);
+
 ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 
 ssize_t read(int fd, void *buf, size_t count);
+
+
 
 #endif //FBAM_BLOCK_ACCESS_DECORATOR_H
