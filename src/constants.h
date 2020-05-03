@@ -3,7 +3,7 @@
 
 #include <unistd.h>
 
-#define TIMESTAMP_BUFFER_LEN 19
+#define TIMESTAMP_BUFFER_LEN 38
 
 #define MAX_LOG_LEN (MAXPATHLEN + 50)
 #define BUFFER_SIZE 100

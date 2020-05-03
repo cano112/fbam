@@ -22,15 +22,17 @@ void report_and_exit(const char* msg) {
     exit(-1);
 }
 
-char* format_timestamp(char *buffer, time_t time)
+char* format_timestamp(char *buffer, struct timeval time)
 {
     struct tm* tm_info;
-    tm_info = localtime(&time);
-    strftime(buffer, TIMESTAMP_BUFFER_LEN, "%Y-%m-%d-%H-%M-%S", tm_info);
+    tm_info = localtime(&(time.tv_sec));
+    char tmpbuf[TIMESTAMP_BUFFER_LEN];
+    strftime(tmpbuf, TIMESTAMP_BUFFER_LEN/2, "%Y-%m-%d %H:%M:%S", tm_info);
+    snprintf(buffer, TIMESTAMP_BUFFER_LEN, "%s.%06ld", tmpbuf, time.tv_usec);
     return buffer;
 }
 
-void append_log(FILE* log_file, time_t time, char* function_name, char* file_path, size_t count, off_t offset)
+void append_log(FILE* log_file, struct timeval time, char* function_name, char* file_path, size_t count, off_t offset)
 {
     char log_message[MAX_LOG_LEN];
     char time_buffer[TIMESTAMP_BUFFER_LEN];
@@ -46,9 +48,16 @@ void append_log(FILE* log_file, time_t time, char* function_name, char* file_pat
     }
 }
 
+struct timeval get_timestamp() {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return tv;
+}
+
 void log_file_access(char* function_name, int fd, size_t count, off_t offset)
 {
-    time_t timestamp = time(NULL);
+    struct timeval timestamp = get_timestamp();
+   
     if (access_log_file != NULL)
     {
         char fd_path[MAXPATHLEN];
