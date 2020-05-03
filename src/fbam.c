@@ -81,9 +81,10 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 
 ssize_t read(int fd, void *buf, size_t count)
 {
-    log_file_access("read", fd, count, 0);
-    pread_function_type original_read = (pread_function_type)dlsym(RTLD_NEXT, "read");
-    return original_read(fd, buf, count, 0);
+    off_t offset = lseek(fd, 0, SEEK_CUR);
+    log_file_access("read", fd, count, offset);
+    read_function_type original_read = (read_function_type)dlsym(RTLD_NEXT, "read");
+    return original_read(fd, buf, count);
 }
 
 
