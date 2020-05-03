@@ -22,4 +22,4 @@ mkdir -p ./test_results
 docker cp "fbam_build_dummy:/fbam/build/$logfile" "./test_results/$logfile"
 docker logs fbam_build_dummy
 echo "------- TEST RESULTS ---------"
-cat "./test_results$logfile"
+cat "./test_results/$logfile"

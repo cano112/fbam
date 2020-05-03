@@ -54,7 +54,8 @@ void log_file_access(char* function_name, int fd, size_t count, off_t offset)
         char fd_path[MAXPATHLEN];
         char file_path[MAXPATHLEN];
         snprintf(fd_path, MAXPATHLEN, "/proc/self/fd/%d", fd);
-        readlink(fd_path, file_path, MAXPATHLEN);
+        ssize_t path_len = readlink(fd_path, file_path, MAXPATHLEN);
+        file_path[path_len] = '\0';
         if (strstr(file_path, work_dir)) 
         {
             append_log(access_log_file, timestamp, function_name, file_path, count, offset);
