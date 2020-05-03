@@ -9,9 +9,9 @@ int logs_count = 0;
 
 
 static int initialize() {
-    work_dir = getenv(HF_FS_MONIT_PATH_FILTER_ENV_VAR);
-    command = getenv(HF_FS_MONIT_COMMAND_ENV_VAR);
-    log_file_path = getenv(HF_FS_MONIT_LOGFILE_ENV_VAR);
+    work_dir = getenv(HF_VAR_FS_MONIT_PATH_FILTER_ENV_VAR);
+    command = getenv(HF_VAR_FS_MONIT_COMMAND_ENV_VAR);
+    log_file_path = getenv(HF_VAR_FS_MONIT_LOGFILE_ENV_VAR);
     access_log_file = fopen(log_file_path, "a+");
     return 0;
 }
