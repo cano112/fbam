@@ -3,6 +3,7 @@
 char* log_file_path;
 char* work_dir;
 char* command;
+char* ld_preload_env;
 
 FILE* access_log_file;
 int logs_count = 0;
@@ -12,6 +13,7 @@ static int initialize() {
     work_dir = getenv(HF_VAR_FS_MONIT_PATH_FILTER);
     command = getenv(HF_VAR_FS_MONIT_COMMAND);
     log_file_path = getenv(HF_VAR_FS_MONIT_LOGFILE);
+    ld_preload_env = getenv(LD_PRELOAD);
     access_log_file = fopen(log_file_path, "a+");
     return 0;
 }
@@ -32,14 +34,19 @@ char* format_timestamp(char *buffer, struct timeval time)
     return buffer;
 }
 
+void _fflush(FILE* log_file)
+{
+    logs_count = 0;
+    fflush(log_file);
+}
+
 void flush_log(char* log_message, FILE* log_file)
 {
     fputs(log_message, log_file);
     logs_count++;
     if (logs_count == BUFFER_SIZE)
     {
-        logs_count = 0;
-        fflush(log_file);
+        _fflush(log_file);
     }
 }
 
@@ -196,6 +203,63 @@ int close(int fildes)
     close_function_type original_close = (close_function_type)dlsym(RTLD_NEXT, FUN_CLOSE);
     log_file_close(FUN_CLOSE, fildes, timestamp);
     return original_close(fildes);
+}
+
+void load_env_variable_string(char *buffer, char* name, char* value)
+{
+    snprintf(buffer, MAXPATHLEN, "%s=%s", name, value);
+}
+
+void build_new_exec_env(char *new_envp[], char *const envp[])
+{
+    int n = 0;
+    while(envp[n] != NULL)
+    {
+        char *current = envp[n];
+        char *buffer = malloc((strlen(current) + 1) * sizeof(char));
+        strcpy(buffer, current);
+        new_envp[n] = buffer;
+        n++;
+    }
+    char *ld_buffer = malloc(MAXPATHLEN * sizeof(char));
+    load_env_variable_string(ld_buffer, LD_PRELOAD, ld_preload_env);
+    
+    char *filter_buffer = malloc(MAXPATHLEN * sizeof(char));
+    load_env_variable_string(filter_buffer, HF_VAR_FS_MONIT_PATH_FILTER, work_dir);
+    
+    char *command_buffer = malloc(MAXPATHLEN * sizeof(char));
+    load_env_variable_string(command_buffer, HF_VAR_FS_MONIT_COMMAND, command);
+    
+    char *file_path_buffer = malloc(MAXPATHLEN * sizeof(char));
+    load_env_variable_string(file_path_buffer, HF_VAR_FS_MONIT_LOGFILE, log_file_path);
+    
+    new_envp[n] = ld_buffer;
+    new_envp[n+1] = filter_buffer;
+    new_envp[n+2] = command_buffer;
+    new_envp[n+3] = file_path_buffer;
+    new_envp[n+4] = NULL;
+}
+
+int execve(const char* filename, char* const argv[], char* const envp[])
+{
+    char *new_envp[ARG_MAX];
+    build_new_exec_env(new_envp, envp);
+    _fflush(access_log_file); // force flush
+    
+    execve_function_type original_execve = (execve_function_type)dlsym(RTLD_NEXT, FUN_EXECVE);  
+    int ret = original_execve(filename, argv, new_envp);
+    initialize(); // initialize global variables again
+}
+
+int execveat(int dirfd, const char *pathname, char *const argv[], char *const envp[], int flags)
+{
+    char *new_envp[ARG_MAX];
+    build_new_exec_env(new_envp, envp);
+    _fflush(access_log_file); // force flush
+    
+    execveat_function_type original_execveat = (execveat_function_type)dlsym(RTLD_NEXT, FUN_EXECVEAT);  
+    int ret = original_execveat(dirfd, pathname, argv, new_envp, flags);
+    initialize(); // initialize global variables again
 }
 
 

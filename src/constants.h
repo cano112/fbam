@@ -10,6 +10,7 @@
 #define HF_VAR_FS_MONIT_COMMAND "HF_VAR_FS_MONIT_COMMAND"
 #define HF_VAR_FS_MONIT_LOGFILE "HF_VAR_FS_MONIT_LOGFILE"
 #define HF_VAR_FS_MONIT_PATH_FILTER "HF_VAR_FS_MONIT_PATH_FILTER"
+#define LD_PRELOAD "LD_PRELOAD"
 
 #define FUN_WRITE "write"
 #define FUN_PWRITE "pwrite"
@@ -17,5 +18,7 @@
 #define FUN_PREAD "pread"
 #define FUN_OPEN "open"
 #define FUN_CLOSE "close"
+#define FUN_EXECVE "execve"
+#define FUN_EXECVEAT "execveat"
 
 #endif //FBAM_CONSTANTS_H
