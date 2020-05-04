@@ -12,4 +12,5 @@ int main(int argc, char** argv)
     size_t nbytes = sizeof(buf);
     read(fd, buf, nbytes);
     pread(fd, buf, nbytes - 5, 5);
+    close(fd);
 }
