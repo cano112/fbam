@@ -27,18 +27,46 @@ char* format_timestamp(char *buffer, struct timeval time)
     struct tm* tm_info;
     tm_info = localtime(&(time.tv_sec));
     char tmpbuf[TIMESTAMP_BUFFER_LEN];
-    strftime(tmpbuf, TIMESTAMP_BUFFER_LEN/2, "%Y-%m-%d %H:%M:%S", tm_info);
+    strftime(tmpbuf, TIMESTAMP_BUFFER_LEN/2, "%Y-%m-%dT%H:%M:%S", tm_info);
     snprintf(buffer, TIMESTAMP_BUFFER_LEN, "%s.%06ld", tmpbuf, time.tv_usec);
     return buffer;
 }
 
-void append_log(FILE* log_file, struct timeval time, char* function_name, char* file_path, size_t count, off_t offset)
+void append_block_log(FILE* log_file, struct timeval time, char* function_name, char* file_path, size_t count, size_t real_count, off_t offset)
 {
     char log_message[MAX_LOG_LEN];
     char time_buffer[TIMESTAMP_BUFFER_LEN];
     snprintf(log_message, MAX_LOG_LEN,
-            "{\"command\": \"%s\", \"timestamp\": \"%s\", \"function_name\": \"%s\", \"file_path\": \"%s\", \"size\": \"%zu\", \"offset\": \"%ld\"}\n",
-             command, format_timestamp(time_buffer, time), function_name, file_path, count, offset);
+            "{\"time\": \"%s\", "
+             "\"command\": \"%s\", "
+             "\"parameter\": \"%s\", "
+             "\"value\": {"
+                 "\"file_path\": \"%s\", "
+                 "\"size\": \"%zu\", "
+                 "\"real_size\": \"%zu\", "
+                 "\"offset\": \"%ld\"}}\n",
+             format_timestamp(time_buffer, time), command, function_name, file_path, count, real_count, offset);
+    fputs(log_message, log_file);
+    logs_count++;
+    if (logs_count == BUFFER_SIZE)
+    {
+        logs_count = 0;
+        fflush(log_file);
+    }
+}
+
+void append_open_log(FILE* log_file, struct timeval time, char* function_name, char* file_path, int oflags)
+{
+    char log_message[MAX_LOG_LEN];
+    char time_buffer[TIMESTAMP_BUFFER_LEN];
+    snprintf(log_message, MAX_LOG_LEN,
+            "{\"time\": \"%s\", "
+             "\"command\": \"%s\", "
+             "\"parameter\": \"%s\", "
+             "\"value\": {"
+                 "\"file_path\": \"%s\", "
+                 "\"oflags\": \"%d\"}}\n",
+             format_timestamp(time_buffer, time), command, function_name, file_path, oflags);
     fputs(log_message, log_file);
     logs_count++;
     if (logs_count == BUFFER_SIZE)
@@ -54,10 +82,8 @@ struct timeval get_timestamp() {
     return tv;
 }
 
-void log_file_access(char* function_name, int fd, size_t count, off_t offset)
+void log_file_block_access(char* function_name, int fd, size_t count, size_t real_count, off_t offset, struct timeval timestamp)
 {
-    struct timeval timestamp = get_timestamp();
-   
     if (access_log_file != NULL)
     {
         char fd_path[MAXPATHLEN];
@@ -67,25 +93,74 @@ void log_file_access(char* function_name, int fd, size_t count, off_t offset)
         file_path[path_len] = '\0';
         if (strstr(file_path, work_dir)) 
         {
-            append_log(access_log_file, timestamp, function_name, file_path, count, offset);
+            append_block_log(access_log_file, timestamp, function_name, file_path, count, real_count, offset);
+        }
+    }
+}
+
+void log_file_open(char* function_name, int fd, int oflags, struct timeval timestamp)
+{
+    if (access_log_file != NULL)
+    {
+        char fd_path[MAXPATHLEN];
+        char file_path[MAXPATHLEN];
+        snprintf(fd_path, MAXPATHLEN, "/proc/self/fd/%d", fd);
+        ssize_t path_len = readlink(fd_path, file_path, MAXPATHLEN);
+        file_path[path_len] = '\0';
+        if (strstr(file_path, work_dir)) 
+        {
+            append_open_log(access_log_file, timestamp, function_name, file_path, oflags);
         }
     }
 }
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset)
 {
-    log_file_access("pread", fd, count, offset);
-    pread_function_type original_pread = (pread_function_type)dlsym(RTLD_NEXT, "pread");
-    return original_pread(fd, buf, count, offset);
+    struct timeval timestamp = get_timestamp();
+    pread_function_type original_pread = (pread_function_type)dlsym(RTLD_NEXT, FUN_PREAD);
+    ssize_t read = original_pread(fd, buf, count, offset);
+    log_file_block_access(FUN_PREAD, fd, count, read, offset, timestamp);
+    return read;
+}
+
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset)
+{
+    struct timeval timestamp = get_timestamp();
+    pwrite_function_type original_pwrite = (pwrite_function_type)dlsym(RTLD_NEXT, FUN_PWRITE);
+    ssize_t written = original_pwrite(fd, buf, count, offset);
+    log_file_block_access(FUN_PWRITE, fd, count, written, offset, timestamp);
+    return written;
 }
 
 ssize_t read(int fd, void *buf, size_t count)
 {
+    struct timeval timestamp = get_timestamp();
     off_t offset = lseek(fd, 0, SEEK_CUR);
-    log_file_access("read", fd, count, offset);
-    read_function_type original_read = (read_function_type)dlsym(RTLD_NEXT, "read");
-    return original_read(fd, buf, count);
+    read_function_type original_read = (read_function_type)dlsym(RTLD_NEXT, FUN_READ);
+    ssize_t read = original_read(fd, buf, count);
+    log_file_block_access(FUN_READ, fd, count, read, offset, timestamp);
+    return read;
+    
 }
+
+ssize_t write(int fd, const void *buf, size_t count)
+{
+    struct timeval timestamp = get_timestamp();
+    off_t offset = lseek(fd, 0, SEEK_CUR);
+    write_function_type original_write = (write_function_type)dlsym(RTLD_NEXT, FUN_WRITE);
+    ssize_t written = original_write(fd, buf, count);
+    log_file_block_access(FUN_WRITE, fd, count, written, offset, timestamp);
+    return written;
+}
+int open(const char *path, int oflags, ...)
+{
+    struct timeval timestamp = get_timestamp();
+    open_function_type original_open = (open_function_type)dlsym(RTLD_NEXT, FUN_OPEN);
+    int fd = original_open(path, oflags);
+    log_file_open(FUN_OPEN, fd, oflags, timestamp);
+    return fd;
+}
+
 
 
 

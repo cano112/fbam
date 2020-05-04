@@ -5,6 +5,7 @@
 
 #include "constants.h"
 
+#include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <dlfcn.h>
@@ -14,12 +15,28 @@
 #include <string.h>
 #include <time.h>
 
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+
 typedef int (*pread_function_type)(int fd, void *buf, size_t count, off_t offset);
+
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+
+typedef int (*pwrite_function_type)(int fd, const void *buf, size_t count, off_t offset);
+
+ssize_t read(int fd, void *buf, size_t count);
 
 typedef int (*read_function_type)(int fd, void *buf, size_t count);
 
-ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t write(int fd, const void *buf, size_t count);
 
-ssize_t read(int fd, void *buf, size_t count);
+typedef int (*write_function_type)(int fd, const void *buf, size_t count);
+
+typedef int (*open_function_type)(const char *path, int oflags, ...);
+
+int open(const char *path, int oflags, ...);
+
+typedef int (*close_function_type)(int fildes);
+
+int close(int fildes);
 
 #endif //FBAM_BLOCK_ACCESS_DECORATOR_H
