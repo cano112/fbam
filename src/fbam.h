@@ -15,6 +15,9 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <errno.h>
 
 ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 
@@ -47,5 +50,17 @@ int execve(const char* filename, char* const argv[], char* const envp[]);
 typedef int (*execveat_function_type)(int dirfd, const char *pathname, char *const argv[], char *const envp[], int flags);
 
 int execveat(int dirfd, const char *pathname, char *const argv[], char *const envp[], int flags);
+
+typedef int (*fexecve_function_type)(int fd, char *const argv[], char *const envp[]);
+
+int fexecve(int fd, char *const argv[], char *const envp[]);
+
+typedef int (*execle_function_type)(const char *path, const char *arg, ...);
+
+int execle(const char *path, const char *arg, ...);
+
+typedef int (*execvpe_function_type)(const char *file, char *const argv[], char *const envp[]);
+
+int execvpe(const char *file, char *const argv[], char *const envp[]);
 
 #endif //FBAM_BLOCK_ACCESS_DECORATOR_H

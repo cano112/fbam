@@ -8,8 +8,8 @@ char* ld_preload_env;
 FILE* access_log_file;
 int logs_count = 0;
 
-
-static int initialize() {
+static int initialize() 
+{
     work_dir = getenv(HF_VAR_FS_MONIT_PATH_FILTER);
     command = getenv(HF_VAR_FS_MONIT_COMMAND);
     log_file_path = getenv(HF_VAR_FS_MONIT_LOGFILE);
@@ -19,7 +19,8 @@ static int initialize() {
 }
 __attribute__((section(".init_array"))) static void *ctr = &initialize;
 
-void report_and_exit(const char* msg) {
+void report_and_exit(const char* msg) 
+{
     perror(msg);
     exit(-1);
 }
@@ -188,11 +189,24 @@ ssize_t write(int fd, const void *buf, size_t count)
     log_file_block_access(FUN_WRITE, fd, count, written, offset, timestamp);
     return written;
 }
+
 int open(const char *path, int oflags, ...)
 {
     struct timeval timestamp = get_timestamp();
     open_function_type original_open = (open_function_type)dlsym(RTLD_NEXT, FUN_OPEN);
-    int fd = original_open(path, oflags);
+    int fd;
+    if (oflags & O_CREAT)
+    {
+        va_list args;
+        va_start(args, oflags);
+        int mode = va_arg(args, int);
+        va_end(args);
+        fd = original_open(path, oflags, mode);
+    } else 
+    {
+        fd = original_open(path, oflags);
+    }
+    
     log_file_open(FUN_OPEN, fd, oflags, timestamp);
     return fd;
 }
@@ -240,29 +254,108 @@ void build_new_exec_env(char *new_envp[], char *const envp[])
     new_envp[n+4] = NULL;
 }
 
+static void strings_release(char **in)
+{
+    int save_errno = errno;
+    for (char **it = in; it && *it; ++it) {
+        free(*it);
+    }
+    free(in);
+    errno = save_errno;
+}
+
+static char **strings_build(const char *arg, va_list *args)
+{
+    char **result = 0;
+    size_t size = 0;
+    for (const char *it = arg; it; it = va_arg(*args, const char *)) {
+        result = realloc(result, (size + 2) * sizeof(const char *));
+        if (!result) {
+            return NULL;
+        }
+        char *copy = strdup(it);
+        if (!copy) {
+            goto undo;
+        }
+        result[size++] = copy;
+        result[size] = 0;
+    }
+    return result;
+
+undo:
+    /* Return an empty array.  */
+    strings_release(result);
+    return NULL;
+}
+
 int execve(const char* filename, char* const argv[], char* const envp[])
 {
     char *new_envp[ARG_MAX];
     build_new_exec_env(new_envp, envp);
-    _fflush(access_log_file); // force flush
-    
+    _fflush(access_log_file);
+
     execve_function_type original_execve = (execve_function_type)dlsym(RTLD_NEXT, FUN_EXECVE);  
     int ret = original_execve(filename, argv, new_envp);
-    initialize(); // initialize global variables again
+    strings_release(new_envp);
+    initialize();
+    _fflush(access_log_file);
 }
 
 int execveat(int dirfd, const char *pathname, char *const argv[], char *const envp[], int flags)
 {
     char *new_envp[ARG_MAX];
     build_new_exec_env(new_envp, envp);
-    _fflush(access_log_file); // force flush
-    
+    _fflush(access_log_file);
+
     execveat_function_type original_execveat = (execveat_function_type)dlsym(RTLD_NEXT, FUN_EXECVEAT);  
     int ret = original_execveat(dirfd, pathname, argv, new_envp, flags);
-    initialize(); // initialize global variables again
+    strings_release(new_envp);
+    initialize();
+    _fflush(access_log_file);
 }
 
+int fexecve(int fd, char *const argv[], char *const envp[])
+{
+    char *new_envp[ARG_MAX];
+    build_new_exec_env(new_envp, envp);
+    _fflush(access_log_file);
 
+    fexecve_function_type original_fexecve = (fexecve_function_type)dlsym(RTLD_NEXT, FUN_FEXECVE);  
+    int ret = original_fexecve(fd, argv, new_envp);
+    strings_release(new_envp);
+    initialize();
+    _fflush(access_log_file);
+}
 
+int execle(const char *path, const char *arg, ...)
+{
+    va_list args;
+    va_start(args, arg);
+    char **argv = strings_build(arg, &args);
+    char *const *envp = va_arg(args, char *const *);
+    va_end(args);
 
+    char *new_envp[ARG_MAX];
+    build_new_exec_env(new_envp, envp);
+    _fflush(access_log_file);
 
+    execle_function_type original_execle = (execle_function_type)dlsym(RTLD_NEXT, FUN_EXECLE);  
+    int ret = original_execle(path, arg, new_envp);
+    strings_release(new_envp);
+    strings_release(argv);
+    initialize();
+    _fflush(access_log_file);
+}
+
+int execvpe(const char *file, char *const argv[], char *const envp[])
+{
+    char *new_envp[ARG_MAX];
+    build_new_exec_env(new_envp, envp);
+    _fflush(access_log_file);
+
+    execvpe_function_type original_execvpe = (execvpe_function_type)dlsym(RTLD_NEXT, FUN_EXECVPE);  
+    int ret = original_execvpe(file, argv, new_envp);
+    strings_release(new_envp);
+    initialize();
+    _fflush(access_log_file);
+}

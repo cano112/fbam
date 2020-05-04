@@ -20,5 +20,8 @@
 #define FUN_CLOSE "close"
 #define FUN_EXECVE "execve"
 #define FUN_EXECVEAT "execveat"
+#define FUN_FEXECVE "fexecve"
+#define FUN_EXECLE "execle"
+#define FUN_EXECVPE "execvpe"
 
 #endif //FBAM_CONSTANTS_H
