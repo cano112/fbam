@@ -3,7 +3,7 @@
 enabled="1"
 command="./interceptor"
 logfile="log_$(echo "$command" | tr ./ "_" | cut -d' ' -f2).jsonl"
-path_pattern="sample.txt"
+path_pattern="*sample.txt"
 
 echo "Enabled: $enabled"
 echo "Command: $command"

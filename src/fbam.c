@@ -76,7 +76,7 @@ void log_file_block_access(char* function_name, int fd, size_t count, size_t rea
         snprintf(fd_path, MAXPATHLEN, "/proc/self/fd/%d", fd);
         ssize_t path_len = readlink(fd_path, file_path, MAXPATHLEN);
         file_path[path_len] = '\0';
-        if (fnmatch(work_dir_pattern, file_path, 0)) {
+        if (fnmatch(work_dir_pattern, file_path, 0) == 0) {
             char log_message[MAX_LOG_LEN];
             char time_buffer[TIMESTAMP_BUFFER_LEN];
             char* log_message_template = "{\"time\": \"%s\", "
@@ -101,7 +101,7 @@ void log_file_open(char* function_name, int fd, int oflags, struct timeval times
         snprintf(fd_path, MAXPATHLEN, "/proc/self/fd/%d", fd);
         ssize_t path_len = readlink(fd_path, file_path, MAXPATHLEN);
         file_path[path_len] = '\0';
-        if (fnmatch(work_dir_pattern, file_path, 0)) {
+        if (fnmatch(work_dir_pattern, file_path, 0) == 0) {
             char log_message[MAX_LOG_LEN];
             char time_buffer[TIMESTAMP_BUFFER_LEN];
             char* log_message_template = "{\"time\": \"%s\", "
@@ -124,7 +124,7 @@ void log_file_close(char* function_name, int fd, struct timeval timestamp) {
         snprintf(fd_path, MAXPATHLEN, "/proc/self/fd/%d", fd);
         ssize_t path_len = readlink(fd_path, file_path, MAXPATHLEN);
         file_path[path_len] = '\0';
-        if (fnmatch(work_dir_pattern, file_path, 0)) {
+        if (fnmatch(work_dir_pattern, file_path, 0) == 0) {
             char log_message[MAX_LOG_LEN];
             char time_buffer[TIMESTAMP_BUFFER_LEN];
             char* log_message_template = "{\"time\": \"%s\", "
