@@ -1,6 +1,6 @@
 # FBAM - File Block Access Monitoring Tool
 
-Shared library used for logging file access operations in dynamically-linked Linux executables, build for HyperFlow WMS.
+Shared library used for logging file access operations in dynamically-linked Linux executables, build for [HyperFlow WMS](https://github.com/hyperflow-wms).
 
 ## Build
 
